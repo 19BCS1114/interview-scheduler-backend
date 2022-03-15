@@ -72,7 +72,7 @@ router.put("/", async (req, res) => {
         interviewers,
         candidates,
       };
-      InterviewSchema.findByIdAndUpdate(_id, interviewData);
+      const data = await InterviewSchema.findByIdAndUpdate(_id, interviewData);
       if (data) {
         res.send({ message: "Interview updated" });
       } else {
