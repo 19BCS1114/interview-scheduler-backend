@@ -49,7 +49,7 @@ router.post("/", async (req, res) => {
 
     const data = await interviewData.save();
     if (data) {
-      req.send({ message: "Interview created" });
+      res.send({ message: "Interview created" });
     } else {
       res.send({ error: "Failed to create interview" });
     }
