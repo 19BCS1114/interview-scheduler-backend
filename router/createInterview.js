@@ -64,7 +64,7 @@ router.post("/", async (req, res) => {
         break;
       }
     }
-    console.log("This is weired");
+
     if (flag == false) {
       const interviewData = new InterviewSchema({
         name,

@@ -1,19 +1,30 @@
 const router = require("express").Router();
 const InterviewSchema = require("../models/InterviewSchema");
+const mongoose = require("mongoose");
 
 const conflicts = (newStartTime, newEndTime, startTime, endTime) => {
   return (
-    newStartTime.getTime() < endTime.getTime() &&
-    newEndTime.getTime() > startTime.getTime()
+    (startTime.getTime() >= newStartTime.getTime() &&
+      startTime.getTime() <= newEndTime.getTime()) ||
+    (endTime.getTime() >= newStartTime.getTime() &&
+      endTime.getTime() <= newEndTime.getTime()) ||
+    (newStartTime.getTime() >= startTime.getTime() &&
+      newStartTime.getTime() <= endTime.getTime()) ||
+    (newEndTime.getTime() >= startTime.getTime() &&
+      newEndTime.getTime() <= endTime.getTime())
   );
 };
 const personsConflict = (A, B) => {
+  console.log(A, B);
   for (let i = 0; i < A.length; i++) {
-    if (B.includes(A[i]._id)) return true;
+    for (let j = 0; j < B.length; j++) {
+      if (A[i] == B[j].toString()) {
+        return true;
+      }
+    }
   }
   return false;
 };
-
 router.delete("/:id", (req, res) => {
   InterviewSchema.findByIdAndDelete(req.params.id)
     .then((interview) => {
@@ -25,14 +36,15 @@ router.delete("/:id", (req, res) => {
 });
 
 router.put("/", async (req, res) => {
-  const { name, date, startTime, endTime, interviewers, candidates, _id } =
+  let { name, date, startTime, endTime, interviewers, candidates, _id } =
     req.body;
 
   try {
+    let flag = false;
     let interviews = await InterviewSchema.find({});
+    startTime = new Date(date + "T" + startTime + ":00.000Z");
+    endTime = new Date(date + "T" + endTime + ":00.000Z");
     for (let i = 0; i < interviews.length; i++) {
-      startTime = date + "T" + startTime + ":00.000Z";
-      endTime = date + "T" + endTime + ":00.000Z";
       if (
         !_id === interviews[i]._id &&
         conflicts(
@@ -44,25 +56,28 @@ router.put("/", async (req, res) => {
         (personsConflict(interviewers, interviews[i].interviewers) ||
           personsConflict(candidates, interviews[i].candidates))
       ) {
+        flag = true;
         return res.send({
           error: "This interview conflicts with other interview",
         });
       }
     }
 
-    const interviewData = {
-      name,
-      date,
-      startTime,
-      endTime,
-      interviewers,
-      candidates,
-    };
-    InterviewSchema.findByIdAndUpdate(_id, interviewData);
-    if (data) {
-      req.send({ message: "Interview updated" });
-    } else {
-      res.send({ error: "Failed to update interview" });
+    if (flag == false) {
+      const interviewData = {
+        name,
+        date,
+        startTime,
+        endTime,
+        interviewers,
+        candidates,
+      };
+      InterviewSchema.findByIdAndUpdate(_id, interviewData);
+      if (data) {
+        res.send({ message: "Interview updated" });
+      } else {
+        res.send({ error: "Failed to update interview" });
+      }
     }
   } catch (err) {
     console.log(err);
