@@ -2,16 +2,27 @@ const router = require("express").Router();
 const InterviewSchema = require("../models/InterviewSchema");
 const InterviewerSchema = require("../models/InterviewerSchema");
 const CandidateSchema = require("../models/CandidateSchema");
-
+const mongoose = require("mongoose");
 const conflicts = (newStartTime, newEndTime, startTime, endTime) => {
   return (
-    newStartTime.getTime() < endTime.getTime() &&
-    newEndTime.getTime() > startTime.getTime()
+    (startTime.getTime() >= newStartTime.getTime() &&
+      startTime.getTime() <= newEndTime.getTime()) ||
+    (endTime.getTime() >= newStartTime.getTime() &&
+      endTime.getTime() <= newEndTime.getTime()) ||
+    (newStartTime.getTime() >= startTime.getTime() &&
+      newStartTime.getTime() <= endTime.getTime()) ||
+    (newEndTime.getTime() >= startTime.getTime() &&
+      newEndTime.getTime() <= endTime.getTime())
   );
 };
 const personsConflict = (A, B) => {
+  console.log(A, B);
   for (let i = 0; i < A.length; i++) {
-    if (B.includes(A[i]._id)) return true;
+    for (let j = 0; j < B.length; j++) {
+      if (A[i] == B[j].toString()) {
+        return true;
+      }
+    }
   }
   return false;
 };
@@ -33,8 +44,8 @@ router.post("/", async (req, res) => {
   try {
     let flag = false;
     let interviews = await InterviewSchema.find({});
-    startTime = date + "T" + startTime + ":00.000Z";
-    endTime = date + "T" + endTime + ":00.000Z";
+    startTime = new Date(date + "T" + startTime + ":00.000Z");
+    endTime = new Date(date + "T" + endTime + ":00.000Z");
     for (let i = 0; i < interviews.length; i++) {
       if (
         conflicts(
@@ -50,8 +61,10 @@ router.post("/", async (req, res) => {
         res.send({
           error: "This interview conflicts with other interview",
         });
+        break;
       }
     }
+    console.log("This is weired");
     if (flag == false) {
       const interviewData = new InterviewSchema({
         name,
@@ -65,7 +78,6 @@ router.post("/", async (req, res) => {
       const data = await interviewData.save();
       if (data) {
         res.send({ message: "Interview created" });
-        console.log(message);
       } else {
         console.log(error);
         res.send({ error: "Failed to create interview" });
