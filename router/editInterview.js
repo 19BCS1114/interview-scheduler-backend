@@ -72,12 +72,18 @@ router.put("/", async (req, res) => {
         interviewers,
         candidates,
       };
-      const data = await InterviewSchema.findByIdAndUpdate(_id, interviewData);
-      if (data) {
-        res.send({ message: "Interview updated" });
-      } else {
-        res.send({ error: "Failed to update interview" });
-      }
+      const data = await InterviewSchema.findByIdAndUpdate(
+        _id,
+        interviewData,
+        (err, data) => {
+          if (err) {
+            console.log(err);
+            res.send({ error: "Failed to update interview" });
+          } else {
+            res.send({ message: "Interview updated" });
+          }
+        }
+      );
     }
   } catch (err) {
     console.log(err);
