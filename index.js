@@ -20,10 +20,6 @@ mongoose
   })
   .catch((err) => console.log(err));
 
-app.listen(3001, () => {
-  console.log("Server is up and runnning on port 3001");
-});
-
 const homePage = require("./router/homePage");
 const createInterview = require("./router/createInterview");
 const editInterview = require("./router/editInterview");
@@ -31,3 +27,7 @@ const editInterview = require("./router/editInterview");
 app.use("/", homePage);
 app.use("/createinterview", createInterview);
 app.use("/editinterview", editInterview);
+
+app.listen(process.env.PORT || 3001, () => {
+  console.log("Server running on 3001");
+});
