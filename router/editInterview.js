@@ -36,6 +36,7 @@ router.delete("/:id", (req, res) => {
 });
 
 router.put("/", async (req, res) => {
+  console.log(req.body);
   let { name, date, startTime, endTime, interviewers, candidates, _id } =
     req.body;
 
@@ -46,7 +47,7 @@ router.put("/", async (req, res) => {
     endTime = new Date(date + "T" + endTime + ":00.000Z");
     for (let i = 0; i < interviews.length; i++) {
       if (
-        !_id === interviews[i]._id &&
+        !(_id === interviews[i]._id) &&
         conflicts(
           startTime,
           endTime,
@@ -65,25 +66,21 @@ router.put("/", async (req, res) => {
 
     if (flag == false) {
       const interviewData = {
-        name,
-        date,
-        startTime,
-        endTime,
-        interviewers,
-        candidates,
+        name: name,
+        date: date,
+        startTime: startTime,
+        endTime: endTime,
+        interviewers: interviewers,
+        candidates: candidates,
       };
-      const data = await InterviewSchema.findByIdAndUpdate(
-        _id,
-        interviewData,
-        (err, data) => {
-          if (err) {
-            console.log(err);
-            res.send({ error: "Failed to update interview" });
-          } else {
-            res.send({ message: "Interview updated" });
-          }
+      InterviewSchema.findByIdAndUpdate(_id, interviewData, (err) => {
+        if (err) {
+          console.log(err);
+          res.send({ error: "Failed to update interview" });
+        } else {
+          res.send({ message: "Interview updated" });
         }
-      );
+      });
     }
   } catch (err) {
     console.log(err);
