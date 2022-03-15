@@ -1,5 +1,7 @@
 const router = require("express").Router();
 const InterviewSchema = require("../models/InterviewSchema");
+const InterviewerSchema = require("../models/InterviewerSchema");
+const CandidateSchema = require("../models/CandidateSchema");
 
 const conflicts = (newStartTime, newEndTime, startTime, endTime) => {
   return (
@@ -13,15 +15,27 @@ const personsConflict = (A, B) => {
   }
   return false;
 };
+router.get("/", async (req, res) => {
+  try {
+    let interviewers = await InterviewerSchema.find({});
+    let candidates = await CandidateSchema.find({});
+
+    res.send({ interviewers: interviewers, candidates: candidates });
+  } catch (err) {
+    console.log(err);
+    res.send({ err: "Some error occurred" });
+  }
+});
 
 router.post("/", async (req, res) => {
-  const { name, date, startTime, endTime, interviewers, candidates } = req.body;
-
+  let { name, date, startTime, endTime, interviewers, candidates } = req.body;
+  console.log(req.body);
   try {
+    let flag = false;
     let interviews = await InterviewSchema.find({});
+    startTime = date + "T" + startTime + ":00.000Z";
+    endTime = date + "T" + endTime + ":00.000Z";
     for (let i = 0; i < interviews.length; i++) {
-      startTime = date + "T" + startTime + ":00.000Z";
-      endTime = date + "T" + endTime + ":00.000Z";
       if (
         conflicts(
           startTime,
@@ -32,29 +46,34 @@ router.post("/", async (req, res) => {
         (personsConflict(interviewers, interviews[i].interviewers) ||
           personsConflict(candidates, interviews[i].candidates))
       ) {
-        return res.send({
+        flag = true;
+        res.send({
           error: "This interview conflicts with other interview",
         });
       }
     }
+    if (flag == false) {
+      const interviewData = new InterviewSchema({
+        name,
+        date,
+        startTime,
+        endTime,
+        interviewers,
+        candidates,
+      });
 
-    const interviewData = new InterviewSchema({
-      name,
-      date,
-      startTime,
-      endTime,
-      interviewers,
-      candidates,
-    });
-
-    const data = await interviewData.save();
-    if (data) {
-      res.send({ message: "Interview created" });
-    } else {
-      res.send({ error: "Failed to create interview" });
+      const data = await interviewData.save();
+      if (data) {
+        res.send({ message: "Interview created" });
+        console.log(message);
+      } else {
+        console.log(error);
+        res.send({ error: "Failed to create interview" });
+      }
     }
   } catch (err) {
     console.log(err);
+    res.send({ err: "Some error occurred" });
   }
 });
 

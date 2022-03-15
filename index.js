@@ -5,6 +5,7 @@ const express = require("express"),
 
 app.use(cors());
 app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
 const DB =
   "mongodb+srv://19bcs1114:Anubhav123@cluster0.xwhfe.mongodb.net/myFirstDatabase?retryWrites=true&w=majority";
